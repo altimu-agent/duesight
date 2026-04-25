@@ -1,7 +1,7 @@
 # hackathon-agent
 
-Agente B2B de sales intelligence para el AI Agent Economy Hackathon.
+B2B sales intelligence agent for the AI Agent Economy Hackathon.
 
 Stack: Python + TokenRouter (OpenAI-compatible endpoint).
 
-Ver `.env.example` para configuración.
+See `.env.example` for configuration.

@@ -1,25 +1,25 @@
 # hackathon-agent
 
-Agente B2B de sales intelligence para el AI Agent Economy Hackathon (abril 2026).
+B2B sales intelligence agent for the AI Agent Economy Hackathon (April 2026).
 
-## Qué hace
+## What it does
 
-Dado un dominio/empresa, genera un reporte con:
-- Señales de compra (job postings, funding, tech stack)
-- Objeciones comunes
-- Pitch personalizado
+Given a domain/company, it generates a report with:
+- Buying signals (job postings, funding, tech stack)
+- Common objections
+- Personalized pitch
 
 ## Stack
 
 - Python 3
-- TokenRouter como LLM endpoint (OpenAI-compatible)
+- TokenRouter as LLM endpoint (OpenAI-compatible)
 - `https://api.tokenrouter.com/v1`
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# Editar .env con tu TOKENROUTER_API_KEY
+# Edit .env with your TOKENROUTER_API_KEY
 pip install -r requirements.txt
 python src/agent.py example.com
 ```

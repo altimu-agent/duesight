@@ -1,9 +1,9 @@
-# Convenciones
+# Conventions
 
 ## Python
-- Usar `python-dotenv` para secrets
-- API key en `.env` (nunca hardcodeada)
-- Tools como funciones simples, no clases
+- Use `python-dotenv` for secrets
+- API key in `.env` (never hardcoded)
+- Tools as simple functions, not classes
 
 ## Commits
-- En inglés, descriptivos
+- In English, descriptive

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: duesight
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TOKENROUTER_API_KEY
+        sync: false
+      - key: TOKENROUTER_BASE_URL
+        value: https://api.tokenrouter.com/v1
+      - key: MODEL
+        value: claude-sonnet-4-6
+      - key: PYTHON_VERSION
+        value: "3.12.5"
+    healthCheckPath: /health

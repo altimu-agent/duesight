@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DueSight — B2B intelligence in minutes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Markdown rendering */
+    #report h1 { font-size: 1.875rem; font-weight: 800; margin: 2rem 0 1rem; color: #f1f5f9; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    #report h2 { font-size: 1.5rem; font-weight: 700; margin: 2.5rem 0 1rem; color: #e2e8f0; padding-top: 1rem; border-top: 1px solid #1e293b; }
+    #report h3 { font-size: 1.125rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: #cbd5e1; }
+    #report p, #report li { color: #cbd5e1; line-height: 1.7; }
+    #report ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
+    #report ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
+    #report strong { color: #f1f5f9; font-weight: 600; }
+    #report code { background: #1e293b; color: #a7f3d0; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; }
+    #report pre { background: #0f172a; border: 1px solid #1e293b; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; }
+    #report pre code { background: transparent; padding: 0; color: #e2e8f0; font-size: 0.8125rem; }
+    #report table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+    #report th { background: #1e293b; color: #e2e8f0; text-align: left; padding: 0.5rem 0.75rem; border: 1px solid #334155; font-weight: 600; }
+    #report td { padding: 0.5rem 0.75rem; border: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    #report blockquote { border-left: 3px solid #475569; padding-left: 1rem; color: #94a3b8; margin: 1rem 0; font-style: italic; }
+    #report hr { border: 0; border-top: 1px solid #1e293b; margin: 2rem 0; }
+
+    .pulse-dot { animation: pulseDot 1.4s ease-in-out infinite; }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+  <header class="border-b border-slate-800 bg-slate-900/30">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center font-bold text-slate-950">DS</div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">DueSight</h1>
+          <p class="text-xs text-slate-400">Elite B2B intelligence — 9-section reports in minutes.</p>
+        </div>
+      </div>
+      <a href="https://github.com" class="text-xs text-slate-400 hover:text-slate-200 transition hidden sm:block">AI Agent Economy Hackathon · April 2026</a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Form -->
+    <section id="form-section">
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold tracking-tight mb-2">Compare a company against its competitors.</h2>
+        <p class="text-slate-400">DueSight pulls public signals, runs a competitive analysis, and produces a $10K-grade due-diligence report — including a risk score, verdict, and concrete growth fixes. <span class="text-slate-500">Typical run: 2–4 minutes.</span></p>
+      </div>
+
+      <form id="analyze-form" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Company name <span class="text-emerald-400">*</span></label>
+            <input name="company" required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="Stripe" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Website</label>
+            <input name="website" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="stripe.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Industry</label>
+            <input name="industry" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="payments / fintech infrastructure" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Country</label>
+            <input name="country" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="USA" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Contract value (USD)</label>
+            <input name="contract_value" type="number" min="0" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="250000 (optional)" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5 text-slate-300">Competitors <span class="text-slate-500">(optional — leave blank to auto-discover)</span></label>
+            <input name="competitors" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2.5 outline-none transition" placeholder="Auto-discover (or override: Adyen, Braintree, Square)" />
+          </div>
+        </div>
+        <button type="submit" id="submit-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:cursor-not-allowed text-slate-950 font-bold rounded-lg py-3 transition">
+          Run Analysis →
+        </button>
+      </form>
+
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-500">
+        <div class="border border-slate-800 rounded-lg p-3">
+          <div class="text-emerald-400 font-semibold mb-1">Competitive intelligence</div>
+          Landscape, positioning, where you win or lose.
+        </div>
+        <div class="border border-slate-800 rounded-lg p-3">
+          <div class="text-emerald-400 font-semibold mb-1">Growth strategy</div>
+          Conversion analysis, revenue leaks, exact rewrites.
+        </div>
+        <div class="border border-slate-800 rounded-lg p-3">
+          <div class="text-emerald-400 font-semibold mb-1">Due diligence</div>
+          Risk score 0–100, verdict, structured JSON.
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison strip -->
+    <section id="comparison-section" class="hidden">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs uppercase tracking-wider text-slate-500">Companies in this analysis</h3>
+        <span id="dismiss-hint" class="hidden text-xs text-slate-500">Click × to dismiss any competitor below</span>
+      </div>
+      <div id="comparison-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+    </section>
+
+    <!-- Live tool log -->
+    <section id="status-section" class="hidden mb-8">
+      <div class="border border-slate-800 rounded-xl overflow-hidden">
+        <div class="bg-slate-900/50 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
+          <span class="text-xs uppercase tracking-wider text-slate-400">Live research</span>
+          <div class="flex items-center gap-2">
+            <span id="status-spinner" class="inline-block w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+            <span id="status-label" class="text-xs text-slate-400">Working…</span>
+          </div>
+        </div>
+        <div id="tool-log" class="bg-slate-950 px-4 py-3 font-mono text-xs space-y-1 max-h-72 overflow-y-auto"></div>
+      </div>
+    </section>
+
+    <!-- Risk + verdict badges -->
+    <section id="badges-section" class="hidden grid grid-cols-2 gap-4 mb-8">
+      <div id="risk-card" class="border border-slate-800 rounded-xl p-5 transition">
+        <div class="text-xs uppercase tracking-wider text-slate-500 mb-2">Risk score</div>
+        <div class="flex items-end gap-3">
+          <div id="risk-score" class="text-5xl font-bold leading-none">—</div>
+          <div id="risk-level" class="text-sm font-semibold pb-1">—</div>
+        </div>
+      </div>
+      <div id="verdict-card" class="border border-slate-800 rounded-xl p-5 transition">
+        <div class="text-xs uppercase tracking-wider text-slate-500 mb-2">Procurement verdict</div>
+        <div id="verdict" class="text-3xl font-bold">—</div>
+      </div>
+    </section>
+
+    <!-- Full report -->
+    <section id="report-section" class="hidden">
+      <article id="report" class="max-w-none"></article>
+      <div class="mt-8 flex gap-3">
+        <button id="download-btn" class="text-sm border border-slate-700 hover:border-emerald-500 hover:text-emerald-400 rounded-lg px-4 py-2 transition">↓ Download markdown</button>
+        <button id="reset-btn" class="text-sm border border-slate-700 hover:border-slate-500 rounded-lg px-4 py-2 transition">↻ Run another</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const form = $('analyze-form');
+    const submitBtn = $('submit-btn');
+
+    let lastReport = '';
+    let lastCompany = '';
+
+    function logEvent(text, kind = 'info') {
+      const colors = { info: 'text-slate-400', tool: 'text-slate-200', ok: 'text-emerald-400', warn: 'text-amber-400', err: 'text-red-400' };
+      const div = document.createElement('div');
+      div.className = colors[kind] || colors.info;
+      div.textContent = text;
+      $('tool-log').appendChild(div);
+      $('tool-log').scrollTop = $('tool-log').scrollHeight;
+    }
+
+    // Escape user/LLM strings for safe HTML attribute and text insertion.
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+
+    function appendPrimaryCard(company, website) {
+      const cards = $('comparison-cards');
+      cards.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'border border-emerald-500/60 bg-emerald-500/5 rounded-lg p-3';
+      card.innerHTML = `
+        <div class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Primary</div>
+        <div class="font-semibold text-sm truncate" title="${esc(company)}">${esc(company)}</div>
+        <div class="text-[11px] text-slate-400 truncate">${esc(website || ' ')}</div>
+      `;
+      cards.appendChild(card);
+      $('comparison-section').classList.remove('hidden');
+    }
+
+    function appendDiscoveringPlaceholders(n = 3) {
+      const cards = $('comparison-cards');
+      for (let i = 0; i < n; i++) {
+        const card = document.createElement('div');
+        card.className = 'placeholder-card border border-slate-800 bg-slate-900/30 rounded-lg p-3 animate-pulse';
+        card.innerHTML = `
+          <div class="text-[10px] uppercase tracking-wider text-slate-600 mb-1">Discovering…</div>
+          <div class="h-4 bg-slate-800 rounded w-3/4 mb-1.5"></div>
+          <div class="h-3 bg-slate-800 rounded w-full"></div>
+        `;
+        cards.appendChild(card);
+      }
+    }
+
+    function clearPlaceholders() {
+      document.querySelectorAll('.placeholder-card').forEach((el) => el.remove());
+    }
+
+    function appendCompetitorCard({ name, tagline = '' }) {
+      const cards = $('comparison-cards');
+      const card = document.createElement('div');
+      card.className = 'competitor-card relative border border-slate-800 bg-slate-900/30 rounded-lg p-3 transition';
+      card.dataset.name = name;
+      card.innerHTML = `
+        <button class="dismiss-btn hidden absolute top-1.5 right-1.5 w-5 h-5 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition flex items-center justify-center text-sm leading-none" title="Dismiss this competitor" type="button">×</button>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Competitor</div>
+        <div class="font-semibold text-sm truncate" title="${esc(name)}">${esc(name)}</div>
+        <div class="text-[11px] text-slate-400 line-clamp-2 leading-snug">${esc(tagline || ' ')}</div>
+      `;
+      card.querySelector('.dismiss-btn').addEventListener('click', () => {
+        card.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => card.remove(), 180);
+      });
+      cards.appendChild(card);
+    }
+
+    function enableDismissButtons() {
+      document.querySelectorAll('.dismiss-btn').forEach((b) => b.classList.remove('hidden'));
+      $('dismiss-hint').classList.remove('hidden');
+    }
+
+    function setStatus(label, kind = 'working') {
+      $('status-label').textContent = label;
+      const dot = $('status-spinner');
+      dot.classList.remove('bg-emerald-400', 'bg-red-400', 'bg-slate-500', 'pulse-dot');
+      if (kind === 'working') { dot.classList.add('bg-emerald-400', 'pulse-dot'); }
+      else if (kind === 'done') { dot.classList.add('bg-slate-500'); }
+      else if (kind === 'error') { dot.classList.add('bg-red-400'); }
+    }
+
+    function applyBadges(markdown) {
+      const m = markdown.match(/"risk_score"\s*:\s*(\d+)/);
+      const lm = markdown.match(/"risk_level"\s*:\s*"([^"]+)"/);
+      const vm = markdown.match(/"verdict"\s*:\s*"([^"]+)"/);
+
+      if (m) $('risk-score').textContent = m[1];
+      if (lm) {
+        const level = lm[1].trim();
+        const lEl = $('risk-level');
+        lEl.textContent = level;
+        const palette = {
+          LOW:      { text: 'text-emerald-400', card: 'border-emerald-500/40 bg-emerald-500/5' },
+          MEDIUM:   { text: 'text-amber-400',   card: 'border-amber-500/40 bg-amber-500/5' },
+          HIGH:     { text: 'text-orange-400',  card: 'border-orange-500/40 bg-orange-500/5' },
+          CRITICAL: { text: 'text-red-400',     card: 'border-red-500/40 bg-red-500/5' },
+        }[level] || { text: 'text-slate-300', card: 'border-slate-800' };
+        lEl.className = `text-sm font-semibold pb-1 ${palette.text}`;
+        $('risk-card').className = `rounded-xl p-5 transition border ${palette.card}`;
+      }
+      if (vm) {
+        const verdict = vm[1].trim();
+        const vEl = $('verdict');
+        vEl.textContent = verdict;
+        const palette = {
+          APPROVED:    { text: 'text-emerald-400', card: 'border-emerald-500/40 bg-emerald-500/5' },
+          CONDITIONAL: { text: 'text-amber-400',   card: 'border-amber-500/40 bg-amber-500/5' },
+          REJECTED:    { text: 'text-red-400',     card: 'border-red-500/40 bg-red-500/5' },
+        }[verdict] || { text: 'text-slate-300', card: 'border-slate-800' };
+        vEl.className = `text-3xl font-bold ${palette.text}`;
+        $('verdict-card').className = `rounded-xl p-5 transition border ${palette.card}`;
+      }
+
+      $('badges-section').classList.remove('hidden');
+    }
+
+    function renderReport(markdown) {
+      lastReport = markdown;
+      $('report').innerHTML = marked.parse(markdown);
+      $('report-section').classList.remove('hidden');
+      applyBadges(markdown);
+      $('report-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function handleEvent(event) {
+      if (event.type === 'competitors_discovered') {
+        clearPlaceholders();
+        const list = event.competitors || [];
+        logEvent(`Discovered ${list.length} competitor${list.length === 1 ? '' : 's'}: ${list.map((c) => c.name).join(', ')}`, 'ok');
+        for (const c of list) appendCompetitorCard(c);
+      } else if (event.type === 'tool_call') {
+        const args = Object.entries(event.args || {})
+          .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+          .join(', ');
+        logEvent(`[step ${event.step}] → ${event.name}(${args})`, 'tool');
+      } else if (event.type === 'tool_result') {
+        // Subtle — skip log to keep noise down. Could enable if useful.
+      } else if (event.type === 'report') {
+        logEvent('✓ Report generated.', 'ok');
+        if (event.score_info?.overrode) {
+          logEvent(
+            `[reconciled] table sum=${event.score_info.table_sum} → clamped=${event.score_info.clamped}; corrected JSON.`,
+            'warn'
+          );
+        }
+        setStatus('Done.', 'done');
+        renderReport(event.content);
+        enableDismissButtons();
+      } else if (event.type === 'error') {
+        logEvent(`ERROR: ${event.message}`, 'err');
+        setStatus('Error.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Run Analysis →';
+      } else if (event.type === 'done') {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Run Analysis →';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const company = (fd.get('company') || '').toString().trim();
+      if (!company) return;
+      lastCompany = company;
+      const competitorsStr = (fd.get('competitors') || '').toString();
+      const competitors = competitorsStr.split(',').map((s) => s.trim()).filter(Boolean);
+      const body = {
+        company,
+        website: (fd.get('website') || '').toString().trim() || null,
+        industry: (fd.get('industry') || '').toString().trim() || null,
+        country: (fd.get('country') || '').toString().trim() || null,
+        contract_value: fd.get('contract_value') ? parseInt(fd.get('contract_value'), 10) : null,
+        competitors: competitors.length ? competitors : null,
+      };
+
+      // Reset / show output sections
+      $('tool-log').innerHTML = '';
+      $('status-section').classList.remove('hidden');
+      $('report-section').classList.add('hidden');
+      $('badges-section').classList.add('hidden');
+      $('dismiss-hint').classList.add('hidden');
+
+      // Primary card always; competitors come from manual input or auto-discovery.
+      appendPrimaryCard(body.company, body.website);
+      if (competitors.length) {
+        for (const name of competitors) appendCompetitorCard({ name });
+      } else {
+        appendDiscoveringPlaceholders(3);
+        logEvent('Auto-discovering competitors…', 'info');
+      }
+
+      setStatus('Working…', 'working');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Analyzing…';
+      logEvent('Starting analysis…', 'info');
+
+      try {
+        const resp = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${text}`);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop() || '';
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              handleEvent(data);
+            } catch (err) {
+              console.warn('bad event payload', line, err);
+            }
+          }
+        }
+      } catch (err) {
+        logEvent(`ERROR: ${err.message || err}`, 'err');
+        setStatus('Error.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Run Analysis →';
+      }
+    });
+
+    $('download-btn').addEventListener('click', () => {
+      if (!lastReport) return;
+      const slug = lastCompany.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'report';
+      const blob = new Blob([lastReport], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${slug}-duesight.md`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    $('reset-btn').addEventListener('click', () => {
+      $('report-section').classList.add('hidden');
+      $('badges-section').classList.add('hidden');
+      $('status-section').classList.add('hidden');
+      $('comparison-section').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

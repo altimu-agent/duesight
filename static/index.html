@@ -300,6 +300,8 @@
         logEvent(`[step ${event.step}] → ${event.name}(${args})`, 'tool');
       } else if (event.type === 'tool_result') {
         // Subtle — skip log to keep noise down. Could enable if useful.
+      } else if (event.type === 'info') {
+        logEvent(event.message, 'warn');
       } else if (event.type === 'report') {
         logEvent('✓ Report generated.', 'ok');
         if (event.score_info?.overrode) {

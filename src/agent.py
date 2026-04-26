@@ -27,7 +27,7 @@ from tools.search import web_search
 load_dotenv()
 
 MODEL = os.getenv("MODEL", "claude-sonnet-4-6")
-MAX_ITERATIONS = 12
+MAX_ITERATIONS = 20
 
 
 def _client() -> OpenAI:
@@ -368,7 +368,44 @@ def run_agent_stream(
                 }
             )
 
-    yield {"type": "error", "message": "Max iterations reached without final report."}
+    # Iterations exhausted — force a final synthesis with tools disabled, using
+    # whatever evidence the model has already gathered. Anything missing should
+    # be marked "not found" rather than triggering more research.
+    yield {
+        "type": "info",
+        "message": (
+            f"Max research iterations ({MAX_ITERATIONS}) reached — "
+            "forcing final report synthesis from gathered evidence."
+        ),
+    }
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                "Research time is up. Stop calling tools. Produce the full 9-section "
+                "DueSight report NOW using only the evidence already gathered above. "
+                "For any field where you don't have data, write 'not found' and continue. "
+                "Do not request any more tool calls — output the report directly."
+            ),
+        }
+    )
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            max_tokens=8192,
+        )
+        content = response.choices[0].message.content or ""
+        content = strip_preamble(content)
+        content, score_info = reconcile_score(content)
+        if content.strip():
+            yield {"type": "report", "content": content, "score_info": score_info}
+            return
+    except Exception as e:
+        yield {"type": "error", "message": f"Final-synthesis call failed: {type(e).__name__}: {e}"}
+        return
+
+    yield {"type": "error", "message": "Final-synthesis call returned empty content."}
 
 
 def run_agent(**kwargs) -> tuple[str, dict]:

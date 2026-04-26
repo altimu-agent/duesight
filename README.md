@@ -14,6 +14,8 @@
 
 ![DueSight](docs/screenshot.png)
 
+Weblink:https://duesight.vercel.app/
+
 DueSight runs five research agents in parallel — competitive landscape, website, financials, legal/trust, and key people — then streams a consultant-grade 9-section report with a 0-100 risk score and an APPROVED / CONDITIONAL / REJECTED procurement verdict. First content appears at ~50s; full report at ~2:00.
 
 ## Quick start

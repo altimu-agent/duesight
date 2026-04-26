@@ -53,9 +53,9 @@ def analyze(req: AnalyzeRequest) -> StreamingResponse:
             detail="TOKENROUTER_API_KEY not configured on the server.",
         )
 
-    def event_stream():
+    async def event_stream():
         try:
-            for event in run_agent_stream(
+            async for event in run_agent_stream(
                 company=req.company,
                 website=req.website,
                 industry=req.industry,

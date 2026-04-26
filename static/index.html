@@ -139,6 +139,15 @@
       </div>
     </section>
 
+    <!-- Research progress (per-dimension cards) -->
+    <section id="research-section" class="hidden mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs uppercase tracking-wider text-slate-500">Research progress</h3>
+        <span id="research-counter" class="text-xs text-slate-500"></span>
+      </div>
+      <div id="research-grid" class="research-grid"></div>
+    </section>
+
     <!-- Risk + verdict -->
     <section id="badges-section" class="hidden grid grid-cols-2 gap-4 mb-8">
       <div id="risk-card" class="border border-slate-800 rounded-xl p-5 transition">
@@ -183,7 +192,11 @@
           <span id="disclosure-label">View full report</span>
         </button>
         <div id="report-wrapper" class="hidden mt-4">
-          <article id="report" class="max-w-none"></article>
+          <article id="report" class="max-w-none">
+            <div class="streaming-chunk" data-chunk="snapshot_competitive" data-state="pending"></div>
+            <div class="streaming-chunk" data-chunk="website_growth" data-state="pending"></div>
+            <div class="streaming-chunk" data-chunk="due_diligence" data-state="pending"></div>
+          </article>
         </div>
       </div>
 

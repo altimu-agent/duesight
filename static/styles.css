@@ -270,10 +270,121 @@ body { font-family: 'Inter', system-ui, sans-serif; }
   color: #64748b;
 }
 
+/* Research progress cards */
+.research-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+}
+@media (min-width: 768px) {
+  .research-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+.dim-card {
+  border: 1px solid #1e293b;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  position: relative;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  min-height: 6rem;
+  display: flex;
+  flex-direction: column;
+}
+.dim-card .dim-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  padding-right: 1.25rem;
+}
+.dim-card .dim-status {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.dim-card .dim-summary {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dim-card[data-state="pending"] { opacity: 0.55; }
+.dim-card[data-state="pending"] .dim-status {
+  border: 1px dashed #475569;
+}
+
+.dim-card[data-state="running"] {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+.dim-card[data-state="running"] .dim-status {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-top-color: #34d399;
+  animation: spin 1.2s linear infinite;
+}
+
+.dim-card[data-state="ok"] {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.dim-card[data-state="ok"] .dim-status {
+  background: #10b981;
+  color: #052e16;
+}
+
+.dim-card[data-state="timeout"] {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.04);
+}
+.dim-card[data-state="timeout"] .dim-status {
+  background: #f59e0b;
+  color: #422006;
+}
+
+.dim-card[data-state="error"] {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.04);
+}
+.dim-card[data-state="error"] .dim-status {
+  background: #f87171;
+  color: #450a0a;
+}
+
+/* Status orb color variants for state transitions */
+.task-orb.summarizing::after { border-top-color: #fbbf24; }
+
+/* Streaming chunk containers */
+.streaming-chunk[data-state="pending"] { display: none; }
+.streaming-chunk[data-state="streaming"]::after {
+  content: '▍';
+  display: inline-block;
+  color: #34d399;
+  margin-left: 0.125rem;
+  animation: blink 1s steps(2) infinite;
+  vertical-align: baseline;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
 /* Reduced-motion respect */
 @media (prefers-reduced-motion: reduce) {
-  .pulse-dot, .task-orb::after { animation: none; }
-  .risk-bar-fill, .preset-chip, .btn-download, .toggle-advanced .chevron, .disclosure-toggle .chevron { transition: none; }
+  .pulse-dot, .task-orb::after, .dim-card[data-state="running"] .dim-status, .streaming-chunk[data-state="streaming"]::after { animation: none; }
+  .risk-bar-fill, .preset-chip, .btn-download, .toggle-advanced .chevron, .disclosure-toggle .chevron, .dim-card { transition: none; }
 }
 
 /* PDF / printable mode — recolors the report for white paper */

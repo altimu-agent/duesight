@@ -282,7 +282,7 @@ def build_user_message(
     return "\n".join(lines)
 
 
-def run_agent_stream(
+async def run_agent_stream(
     company: str,
     website: str | None = None,
     industry: str | None = None,
@@ -290,144 +290,73 @@ def run_agent_stream(
     contract_value: int | None = None,
     competitors: list[str] | None = None,
 ):
-    """Generator: yields events as the agent runs.
+    """Async generator: yields events as the agent runs.
 
     Event shapes:
-        {"type": "competitors_discovered", "competitors": [{"name": str, "tagline": str}, ...]}
-        {"type": "tool_call", "step": int, "name": str, "args": dict}
-        {"type": "tool_result", "step": int, "name": str, "preview": str}
+        {"type": "competitors_discovered", "competitors": [{"name", "tagline"}, ...]}
+        {"type": "dimension_started", "dimension": str, "label": str}
+        {"type": "dimension_completed", "dimension": str, "status": str, "summary_preview": str}
+        {"type": "dimension_timeout", "dimension": str, "elapsed_s": float}
+        {"type": "tool_call", "step": int, "name": str, "args": dict, "dimension": str}
+        {"type": "tool_result", "step": int, "name": str, "preview": str, "dimension": str}
+        {"type": "reduce_started"}
         {"type": "report", "content": str, "score_info": dict}
         {"type": "error", "message": str}
     """
-    # Preflight: auto-discover competitors when not provided.
-    if not competitors:
-        discovered = discover_competitors(company, website, industry, country)
-        if discovered:
-            yield {"type": "competitors_discovered", "competitors": discovered}
-            competitors = [c["name"] for c in discovered]
+    from orchestrator import orchestrate
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": build_user_message(
-                company, website, industry, country, contract_value, competitors
-            ),
-        },
-    ]
-    client = _client()
-
-    for i in range(MAX_ITERATIONS):
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            tools=TOOLS,
-            max_tokens=8192,
-        )
-
-        choice = response.choices[0]
-        msg = choice.message
-        messages.append(msg)
-
-        if choice.finish_reason != "tool_calls":
-            content = msg.content or ""
-            content = strip_preamble(content)
+    async for event in orchestrate(
+        company=company,
+        website=website,
+        industry=industry,
+        country=country,
+        contract_value=contract_value,
+        competitors=competitors,
+        discover_competitors_fn=discover_competitors,
+    ):
+        if event.get("type") == "report_raw":
+            content = strip_preamble(event["content"])
             content, score_info = reconcile_score(content)
             yield {"type": "report", "content": content, "score_info": score_info}
-            return
-
-        for tool_call in msg.tool_calls:
-            name = tool_call.function.name
-            try:
-                args = json.loads(tool_call.function.arguments)
-            except json.JSONDecodeError:
-                args = {}
-            yield {"type": "tool_call", "step": i + 1, "name": name, "args": args}
-
-            fn = TOOL_MAP.get(name)
-            try:
-                result = fn(**args) if fn else {"error": f"Unknown tool: {name}"}
-            except Exception as e:
-                result = {"error": f"{type(e).__name__}: {e}"}
-
-            preview = json.dumps(result, ensure_ascii=False)
-            if len(preview) > 240:
-                preview = preview[:240] + "…"
-            yield {
-                "type": "tool_result",
-                "step": i + 1,
-                "name": name,
-                "preview": preview,
-            }
-
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": json.dumps(result, ensure_ascii=False),
-                }
-            )
-
-    # Iterations exhausted — force a final synthesis with tools disabled, using
-    # whatever evidence the model has already gathered. Anything missing should
-    # be marked "not found" rather than triggering more research.
-    yield {
-        "type": "info",
-        "message": (
-            f"Max research iterations ({MAX_ITERATIONS}) reached — "
-            "forcing final report synthesis from gathered evidence."
-        ),
-    }
-    messages.append(
-        {
-            "role": "user",
-            "content": (
-                "Research time is up. Stop calling tools. Produce the full 9-section "
-                "DueSight report NOW using only the evidence already gathered above. "
-                "For any field where you don't have data, write 'not found' and continue. "
-                "Do not request any more tool calls — output the report directly."
-            ),
-        }
-    )
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            max_tokens=8192,
-        )
-        content = response.choices[0].message.content or ""
-        content = strip_preamble(content)
-        content, score_info = reconcile_score(content)
-        if content.strip():
-            yield {"type": "report", "content": content, "score_info": score_info}
-            return
-    except Exception as e:
-        yield {"type": "error", "message": f"Final-synthesis call failed: {type(e).__name__}: {e}"}
-        return
-
-    yield {"type": "error", "message": "Final-synthesis call returned empty content."}
+        else:
+            yield event
 
 
 def run_agent(**kwargs) -> tuple[str, dict]:
-    """Synchronous CLI/test wrapper. Returns (report, score_info).
+    """Synchronous CLI/test wrapper. Returns (report, score_info)."""
+    import asyncio
 
-    Logs tool calls to stderr as a side effect (preserves prior CLI UX).
-    """
-    final = "Max iterations reached without final report."
+    final = "Orchestrator did not produce a report."
     score_info: dict = {}
-    for event in run_agent_stream(**kwargs):
-        if event["type"] == "tool_call":
-            arg_str = ", ".join(f"{k}={v!r}" for k, v in event["args"].items())
-            print(
-                f"[step {event['step']}] -> {event['name']}({arg_str})",
-                file=sys.stderr,
-                flush=True,
-            )
-        elif event["type"] == "report":
-            final = event["content"]
-            score_info = event["score_info"]
-        elif event["type"] == "error":
-            print(f"ERROR: {event['message']}", file=sys.stderr)
+
+    async def _consume():
+        nonlocal final, score_info
+        async for event in run_agent_stream(**kwargs):
+            t = event.get("type")
+            if t == "tool_call":
+                arg_str = ", ".join(f"{k}={v!r}" for k, v in event["args"].items())
+                dim = event.get("dimension", "?")
+                print(
+                    f"[{dim}/step {event['step']}] -> {event['name']}({arg_str})",
+                    file=sys.stderr, flush=True,
+                )
+            elif t == "dimension_started":
+                print(f"[{event['dimension']}] started", file=sys.stderr, flush=True)
+            elif t == "dimension_completed":
+                print(f"[{event['dimension']}] completed ({event['status']})",
+                      file=sys.stderr, flush=True)
+            elif t == "dimension_timeout":
+                print(f"[{event['dimension']}] TIMEOUT after {event['elapsed_s']:.0f}s",
+                      file=sys.stderr, flush=True)
+            elif t == "reduce_started":
+                print("[reduce] synthesizing report…", file=sys.stderr, flush=True)
+            elif t == "report":
+                final = event["content"]
+                score_info = event["score_info"]
+            elif t == "error":
+                print(f"ERROR: {event['message']}", file=sys.stderr)
+
+    asyncio.run(_consume())
     return final, score_info
 
 

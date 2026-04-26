@@ -110,26 +110,123 @@ function enableDismissButtons() {
   $('dismiss-hint').classList.remove('hidden');
 }
 
-/* Live status — current task ─────────────────────────────── */
-function setCurrentTask(name, args) {
-  let label, detail = '';
-  if (name === 'web_search') {
-    label = 'Searching the web';
-    detail = `"${args.query || ''}"`;
-  } else if (name === 'fetch_page') {
-    label = 'Fetching page';
-    detail = (args.url || '').replace(/^https?:\/\//, '');
-  } else {
-    label = name;
-    detail = JSON.stringify(args || {});
-  }
-  $('task-name').textContent = label;
+/* Live status — task panel ───────────────────────────────── */
+const PHASE_LABELS = {
+  init: 'Initializing research',
+  researching: 'Researching',
+  summarizing: 'Summarizing',
+  done: 'Report ready',
+  error: 'Error',
+};
+
+function setPhase(phase, detail = '') {
+  $('task-name').textContent = PHASE_LABELS[phase] || phase;
   $('task-detail').textContent = detail;
+  const orb = $('task-orb');
+  orb.classList.remove('done', 'error', 'summarizing');
+  if (phase === 'done') orb.classList.add('done');
+  else if (phase === 'error') orb.classList.add('error');
+  else if (phase === 'summarizing') orb.classList.add('summarizing');
 }
-function setTaskState(state /* 'working' | 'done' | 'error' */) {
+
+function setTaskState(state) {
   const orb = $('task-orb');
   orb.classList.remove('done', 'error');
   if (state !== 'working') orb.classList.add(state);
+}
+
+/* Research progress cards ────────────────────────────────── */
+const DIMENSIONS = [
+  { key: 'company',     label: 'Company & people' },
+  { key: 'competitors', label: 'Competitors' },
+  { key: 'website',     label: 'Website' },
+  { key: 'financials',  label: 'Financials' },
+  { key: 'trust',       label: 'Legal & trust' },
+];
+
+function initResearchGrid() {
+  const grid = $('research-grid');
+  grid.innerHTML = '';
+  for (const d of DIMENSIONS) {
+    const card = document.createElement('div');
+    card.className = 'dim-card';
+    card.dataset.key = d.key;
+    card.dataset.state = 'pending';
+    card.innerHTML = `
+      <div class="dim-status"></div>
+      <div class="dim-label">${esc(d.label)}</div>
+      <div class="dim-summary">Awaiting…</div>
+    `;
+    grid.appendChild(card);
+  }
+  $('research-section').classList.remove('hidden');
+  updateResearchCounter();
+}
+
+function updateDimCard(key, state, summary) {
+  const card = document.querySelector(`.dim-card[data-key="${key}"]`);
+  if (!card) return;
+  card.dataset.state = state;
+  if (state === 'running') {
+    card.querySelector('.dim-summary').textContent = 'Researching…';
+  } else if (summary) {
+    card.querySelector('.dim-summary').textContent = summary;
+  }
+  card.querySelector('.dim-status').textContent =
+    state === 'ok' ? '✓' : state === 'timeout' ? '!' : state === 'error' ? '✕' : '';
+  updateResearchCounter();
+}
+
+function updateResearchCounter() {
+  const cards = document.querySelectorAll('.dim-card');
+  const done = [...cards].filter((c) =>
+    ['ok', 'timeout', 'error'].includes(c.dataset.state)
+  ).length;
+  $('research-counter').textContent = `${done} of ${cards.length} done`;
+}
+
+/* Streaming chunk renderer (throttled to one rAF per chunk) ─ */
+const chunkBuffers = {};
+const chunkPending = {};
+
+function appendChunkText(key, text) {
+  if (!chunkBuffers[key]) chunkBuffers[key] = '';
+  chunkBuffers[key] += text;
+  if (chunkPending[key]) return;
+  chunkPending[key] = requestAnimationFrame(() => {
+    const el = document.querySelector(`.streaming-chunk[data-chunk="${key}"]`);
+    if (el) el.innerHTML = marked.parse(chunkBuffers[key]);
+    chunkPending[key] = null;
+  });
+}
+
+function setChunkState(key, state) {
+  const el = document.querySelector(`.streaming-chunk[data-chunk="${key}"]`);
+  if (el) el.dataset.state = state;
+}
+
+const CHUNK_KEYS = ['snapshot_competitive', 'website_growth', 'due_diligence'];
+
+function resetChunks() {
+  for (const k of Object.keys(chunkBuffers)) delete chunkBuffers[k];
+  const reportEl = $('report');
+  // Self-heal: renderReport may have flattened the chunk divs into a single
+  // markdown blob on the previous run.
+  if (!reportEl.querySelector('.streaming-chunk')) {
+    reportEl.innerHTML = '';
+    for (const k of CHUNK_KEYS) {
+      const div = document.createElement('div');
+      div.className = 'streaming-chunk';
+      div.dataset.chunk = k;
+      div.dataset.state = 'pending';
+      reportEl.appendChild(div);
+    }
+  } else {
+    reportEl.querySelectorAll('.streaming-chunk').forEach((el) => {
+      el.dataset.state = 'pending';
+      el.innerHTML = '';
+    });
+  }
 }
 function showAlert(message) {
   const row = $('alerts-row');
@@ -262,38 +359,72 @@ function renderReport(markdown) {
 
 /* SSE event handler ──────────────────────────────────────── */
 function handleEvent(event) {
-  if (event.type === 'competitors_discovered') {
+  const t = event.type;
+  if (t === 'competitors_discovered') {
     clearPlaceholders();
-    const list = event.competitors || [];
-    for (const c of list) appendCompetitorCard(c);
-  } else if (event.type === 'tool_call') {
+    for (const c of event.competitors || []) appendCompetitorCard(c);
+
+  } else if (t === 'dimension_started') {
+    setPhase('researching', 'starting parallel research…');
+    updateDimCard(event.dimension, 'running');
+
+  } else if (t === 'dimension_completed') {
+    updateDimCard(event.dimension, event.status === 'ok' ? 'ok' : event.status, event.summary_preview);
+    const done = document.querySelectorAll('.dim-card[data-state="ok"], .dim-card[data-state="timeout"], .dim-card[data-state="error"]').length;
+    setPhase('researching', `${done} of ${DIMENSIONS.length} dimensions done`);
+
+  } else if (t === 'dimension_timeout') {
+    updateDimCard(event.dimension, 'timeout', `Timed out after ${event.elapsed_s}s.`);
+
+  } else if (t === 'tool_call') {
     stepCount = event.step || stepCount + 1;
     $('status-step').textContent = stepCount;
-    setCurrentTask(event.name, event.args || {});
-  } else if (event.type === 'tool_result') {
-    // No-op — current-task line already shows the active call.
-  } else if (event.type === 'info') {
+    // Don't override the phase label; dimensions cards show what's happening.
+
+  } else if (t === 'tool_result' || t === 'reduce_chunk_started') {
+    if (t === 'reduce_chunk_started') setChunkState(event.chunk, 'streaming');
+
+  } else if (t === 'reduce_started') {
+    setPhase('summarizing', 'Generating 9-section report…');
+    $('report-section').classList.remove('hidden');
+    $('report-wrapper').classList.remove('hidden');
+    $('disclosure-toggle').classList.add('expanded');
+    $('disclosure-label').textContent = 'Hide full report';
+    resetChunks();
+
+  } else if (t === 'reduce_chunk_delta') {
+    appendChunkText(event.chunk, event.text);
+
+  } else if (t === 'reduce_chunk_completed') {
+    setChunkState(event.chunk, 'done');
+
+  } else if (t === 'reduce_chunk_error') {
+    setChunkState(event.chunk, 'error');
+    showAlert(`Chunk ${event.chunk} failed: ${event.message}`);
+
+  } else if (t === 'info') {
     showAlert(event.message);
-  } else if (event.type === 'report') {
-    setTaskState('done');
-    $('task-name').textContent = 'Report ready';
-    $('task-detail').textContent = '';
+
+  } else if (t === 'report') {
+    setPhase('done', '');
     stopElapsed();
     if (event.score_info?.overrode) {
       showAlert(
         `Score reconciled: table sum=${event.score_info.table_sum} → clamped=${event.score_info.clamped}.`
       );
     }
+    // Replace streamed chunks with the final reconciled markdown so badges + summary
+    // extraction operate on the canonical content.
     renderReport(event.content);
     enableDismissButtons();
-  } else if (event.type === 'error') {
-    setTaskState('error');
-    $('task-name').textContent = 'Error';
-    $('task-detail').textContent = event.message;
+
+  } else if (t === 'error') {
+    setPhase('error', event.message);
     stopElapsed();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Run Analysis →';
-  } else if (event.type === 'done') {
+
+  } else if (t === 'done') {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Run Analysis →';
   }
@@ -326,12 +457,12 @@ form.addEventListener('submit', async (e) => {
   $('disclosure-toggle').classList.remove('expanded');
   $('disclosure-label').textContent = 'View full report';
   clearAlert();
-  setTaskState('working');
+  initResearchGrid();
+  resetChunks();
+  setPhase('init');
   stepCount = 0;
   $('status-step').textContent = '0';
   $('status-elapsed').textContent = '0:00';
-  $('task-name').textContent = 'Initializing research';
-  $('task-detail').textContent = '';
   startElapsed();
 
   appendPrimaryCard(body.company, body.website);
@@ -443,6 +574,7 @@ $('reset-btn').addEventListener('click', () => {
   $('report-section').classList.add('hidden');
   $('badges-section').classList.add('hidden');
   $('status-section').classList.add('hidden');
+  $('research-section').classList.add('hidden');
   $('comparison-section').classList.add('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
